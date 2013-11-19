@@ -1,27 +1,76 @@
 
-message:
-	-@echo  Specify one of the following toolset as the target of make:
-	-@echo    make gcc   (for MinGW)
-	-@echo    make dmc   (for DigitalMars C++)
-	-@echo    make bcc   (for Borland C++ Compilers)
-	-@echo    make vcc   (for Microsoft Visual C++)
-	-@echo  Please make sure that the "make" program you're using is
-	-@echo  the one from the toolset.
-	-@echo  (GNU make for gcc, nmake for vcc, ... etc.)
+NAME       = gcc
+OBJ_SUFFIX = o
 
-clean:
-	-@rmdir /Q /S obj        2> nul
-	-@del   /Q release\*.exe 2> nul
+###############################################################################
+TARGET = release/GreenPad.exe
+INTDIR = obj/$(NAME)
 
-############################################################################
+all: PRE $(TARGET)
 
-DMAK = make# Hey, why no $(MAKE)????
+OBJS = \
+ $(INTDIR)/thread.$(OBJ_SUFFIX)       \
+ $(INTDIR)/log.$(OBJ_SUFFIX)          \
+ $(INTDIR)/winutil.$(OBJ_SUFFIX)      \
+ $(INTDIR)/textfile.$(OBJ_SUFFIX)     \
+ $(INTDIR)/path.$(OBJ_SUFFIX)         \
+ $(INTDIR)/cmdarg.$(OBJ_SUFFIX)       \
+ $(INTDIR)/file.$(OBJ_SUFFIX)         \
+ $(INTDIR)/find.$(OBJ_SUFFIX)         \
+ $(INTDIR)/ctrl.$(OBJ_SUFFIX)         \
+ $(INTDIR)/registry.$(OBJ_SUFFIX)     \
+ $(INTDIR)/window.$(OBJ_SUFFIX)       \
+ $(INTDIR)/string.$(OBJ_SUFFIX)       \
+ $(INTDIR)/memory.$(OBJ_SUFFIX)       \
+ $(INTDIR)/app.$(OBJ_SUFFIX)          \
+ $(INTDIR)/ip_cursor.$(OBJ_SUFFIX)    \
+ $(INTDIR)/ip_scroll.$(OBJ_SUFFIX)    \
+ $(INTDIR)/ip_wrap.$(OBJ_SUFFIX)      \
+ $(INTDIR)/ip_draw.$(OBJ_SUFFIX)      \
+ $(INTDIR)/ip_ctrl1.$(OBJ_SUFFIX)     \
+ $(INTDIR)/ip_text.$(OBJ_SUFFIX)      \
+ $(INTDIR)/ip_parse.$(OBJ_SUFFIX)     \
+ $(INTDIR)/GpMain.$(OBJ_SUFFIX)       \
+ $(INTDIR)/OpenSaveDlg.$(OBJ_SUFFIX)  \
+ $(INTDIR)/Search.$(OBJ_SUFFIX)       \
+ $(INTDIR)/RSearch.$(OBJ_SUFFIX)      \
+ $(INTDIR)/ConfigManager.$(OBJ_SUFFIX)
 
-gcc:
-	$(MAKE) -f Makefiles/gcc.mak
-dmc:
-	$(DMAK) -f Makefiles/dmc.mak
-vcc:
-	$(MAKE) -f Makefiles/vcc.mak
-bcc:
-	$(MAKE) -f Makefiles/bcc.mak
+LIBS = \
+ -lkernel32 \
+ -luser32   \
+ -lgdi32    \
+ -lshell32  \
+ -ladvapi32 \
+ -lcomdlg32 \
+ -lcomctl32 \
+ -lole32    \
+ -limm32
+
+PRE:
+	-@if [ ! -d release   ]; then   mkdir release; fi;
+	-@if [ ! -d obj       ]; then   mkdir obj; fi;
+	-@if [ ! -d $(INTDIR) ]; then   mkdir $(INTDIR); fi;
+###############################################################################
+
+RES = $(INTDIR)/gp_rsrc.o
+
+VPATH    = editwing:kilib
+CXXFLAGS = -fpermissive -O2 -idirafter kilib -c --input-charset=cp932
+LOPT     = -mwindows 
+
+$(TARGET) : $(OBJS) $(RES)
+	g++ $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS)
+	strip -s $(TARGET)
+$(INTDIR)/%.o: rsrc/%.rc
+#	windres --language=0x411 -I rsrc $< $@
+	windres -c 65001  -I rsrc $< $@
+$(INTDIR)/%.o: %.cpp
+	g++ $(CXXFLAGS) -o$@ $<
+
+clean : 
+	-rm $(RES)
+	-rm $(OBJS)
+	-rm $(TARGET)
+	-rmdir $(INTDIR)
+	-rmdir obj
