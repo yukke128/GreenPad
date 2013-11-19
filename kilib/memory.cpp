@@ -120,6 +120,9 @@ using namespace ki;
 
 #endif
 
+#ifndef SUPERTINY
+	static HANDLE g_heap;
+#endif
 
 
 #ifdef USE_ORIGINAL_MEMMAN
